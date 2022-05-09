@@ -58,20 +58,22 @@ public class ProductController {
             return new ResponseEntity<>(HttpStatus.ACCEPTED);
         }
     }
-    @PostMapping(path="/edit/{id}")
+    @PostMapping("/edit/{id}")
     public ResponseEntity<Product> editProduct(@PathVariable Long id, @ModelAttribute ProductForm productForm){
         Optional<Product> productOptional = productService.findById(id);
         productForm.setId(productOptional.get().getId());
         MultipartFile multipartFile = productForm.getImage();
         String fileName = multipartFile.getOriginalFilename();
         String fileUpload = env.getProperty("upload.path");
-        Product existProduct = new Product(productForm.getName(),productForm.getPrice(),productForm.getQuantity(), productForm.getDescription(), fileName);
+        Product existProduct = new Product(id,productForm.getName(),productForm.getPrice(),productForm.getQuantity(), productForm.getDescription(), fileName);
         try {
             FileCopyUtils.copy(multipartFile.getBytes(),new File(fileUpload + fileName));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        productService.remove(id);
+        if (existProduct.getImage().equals("filename.jpg")) {
+            existProduct.setImage(productOptional.get().getImage());
+        }
         productService.save(existProduct);
         return new ResponseEntity<>(existProduct,HttpStatus.OK);
     }
